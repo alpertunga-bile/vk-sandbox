@@ -8,12 +8,12 @@ find_package(Vulkan REQUIRED)
 find_package(SDL2 REQUIRED)
 
 include_directories(includes)
-add_executable(vk-sandbox main.cpp sources/vk_engine.cpp sources/vk_initializers.cpp)
+add_executable(${PROJECT_NAME} main.cpp sources/vk_engine.cpp sources/vk_initializers.cpp sources/VkBootstrap.cpp)
 
-include_directories(vk-sandbox ${SDL2_INCLUDE_DIRS})
-target_link_libraries(vk-sandbox ${SDL2_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${SDL2_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${Vulkan_LIBRARY})
 
-target_compile_features(vk-sandbox PRIVATE cxx_std_17)
+target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
