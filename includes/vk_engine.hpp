@@ -28,6 +28,11 @@ class VulkanEngine
         VkRenderPass _renderpass;
         std::vector<VkFramebuffer> _framebuffers;
 
+        VkSemaphore _presentSemaphore, _renderSemaphore;
+        VkFence _renderFence;
+
+        float _framenumber = 0.0f;
+
     public:
         void init();
         void cleanup();
@@ -40,4 +45,5 @@ class VulkanEngine
         void initCommands();
         void initDefaultRenderpass();
         void initFramebuffers();
+        void initSyncStructures();
 };
