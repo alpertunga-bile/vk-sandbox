@@ -25,6 +25,9 @@ class VulkanEngine
         VkCommandPool _commandPool;
         VkCommandBuffer _mainCommandBuffer;
 
+        VkRenderPass _renderpass;
+        std::vector<VkFramebuffer> _framebuffers;
+
     public:
         void init();
         void cleanup();
@@ -35,4 +38,6 @@ class VulkanEngine
         void initVulkan();
         void initSwapchain();
         void initCommands();
+        void initDefaultRenderpass();
+        void initFramebuffers();
 };
