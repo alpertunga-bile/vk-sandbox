@@ -19,6 +19,12 @@ class VulkanEngine
         std::vector<VkImage> _swapchainImages; // actual image
         std::vector<VkImageView> _swapchainImageViews; // wrapper for image
 
+        VkQueue _graphicsQueue;
+        uint32_t _graphicsQueueFamily;
+
+        VkCommandPool _commandPool;
+        VkCommandBuffer _mainCommandBuffer;
+
     public:
         void init();
         void cleanup();
@@ -28,4 +34,5 @@ class VulkanEngine
     private:
         void initVulkan();
         void initSwapchain();
+        void initCommands();
 };
