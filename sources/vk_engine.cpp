@@ -283,7 +283,13 @@ void VulkanEngine::run()
 
 void VulkanEngine::cleanup()
 {
+    vkDeviceWaitIdle(_device);
+
     vkDestroyCommandPool(_device, _commandPool, nullptr);
+
+    vkDestroyFence(_device, _renderFence, nullptr);
+    vkDestroySemaphore(_device, _renderSemaphore, nullptr);
+    vkDestroySemaphore(_device, _presentSemaphore, nullptr);
 
     // images are destroyed with swapchain
     vkDestroySwapchainKHR(_device, _swapchain, nullptr);
