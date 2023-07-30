@@ -5,6 +5,8 @@
 #include "../includes/VkBootstrap.h"
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_vulkan.h>
+#include <fstream>
+#include <iostream>
 #include "vk_engine.hpp"
 
 /*
@@ -165,6 +167,98 @@ void VulkanEngine::initSyncStructures()
     VK_CHECK(vkCreateSemaphore(_device, &semaphoreCreateInfo, nullptr, &_renderSemaphore));
 }
 
+void VulkanEngine::initPipelines()
+{
+    VkShaderModule triangleVertShader;
+    if(loadShaderModule("../shaders/triangle.vert.spv", &triangleVertShader))
+    {
+        std::cout << "Error building triangle.vert.spv shader\n";
+    }
+    else
+    {
+        std::cout << "triangle.vert.spv is loaded\n";
+    }
+
+    VkShaderModule triangleFragShader;
+    if(loadShaderModule("../shaders/triangle.frag.spv", &triangleFragShader))
+    {
+        std::cout << "Error building triangle.frag.spv shader\n";
+    }
+    else
+    {
+        std::cout << "triangle.frag.spv is loaded\n";
+    }
+
+    VkPipelineLayoutCreateInfo pipelineLayoutInfo = vkInit::pipelineLayoutCreateInfo();
+
+    VK_CHECK(vkCreatePipelineLayout(_device, &pipelineLayoutInfo, nullptr, &_trianglePipelineLayout));
+
+    PipelineBuilder pipelineBuilder;
+
+    pipelineBuilder._shaderStages.push_back(
+        vkInit::pipelineShaderStageCreateInfo(VK_SHADER_STAGE_VERTEX_BIT, triangleVertShader)
+    );
+    pipelineBuilder._shaderStages.push_back(
+        vkInit::pipelineShaderStageCreateInfo(VK_SHADER_STAGE_FRAGMENT_BIT, triangleFragShader)
+    );
+
+    pipelineBuilder._vertexInputInfo = vkInit::vertexInputStateCreateInfo();
+    pipelineBuilder._inputAssembly = vkInit::inputAssemblyCreateInfo(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+
+    pipelineBuilder._viewport.x = 0.0f;
+    pipelineBuilder._viewport.y = 0.0f;
+    pipelineBuilder._viewport.width = (float)_windowExtent.width;
+    pipelineBuilder._viewport.height = (float)_windowExtent.height;
+    pipelineBuilder._viewport.minDepth = 0.0f;
+    pipelineBuilder._viewport.maxDepth = 1.0f;
+
+    pipelineBuilder._scissor.offset = {0, 0};
+    pipelineBuilder._scissor.extent = _windowExtent;
+
+    pipelineBuilder._rasterizer = vkInit::rasterizationStateCreateInfo(VK_POLYGON_MODE_FILL);
+
+    pipelineBuilder._multisampling = vkInit::multisamplingStateCreateInfo();
+    pipelineBuilder._colorBlendAttachment = vkInit::colorBlendAttachmentState();
+
+    pipelineBuilder._pipelineLayout = _trianglePipelineLayout;
+
+    _trianglePipeline = pipelineBuilder.buildPipeline(_device, _renderpass);
+}
+
+bool VulkanEngine::loadShaderModule(const char *path, VkShaderModule *outShaderModule)
+{
+    std::ifstream file(path, std::ios::ate | std::ios::binary);
+
+    if(!file.is_open())
+    {
+        return false;
+    }
+
+    size_t fileSize = (size_t)file.tellg();
+
+    std::vector<uint32_t> buffer(fileSize / sizeof(uint32_t));
+
+    file.seekg(0);
+    file.read((char*)buffer.data(), fileSize);
+    file.close();
+
+    VkShaderModuleCreateInfo createInfo = {};
+    createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    createInfo.pNext = nullptr;
+
+    createInfo.codeSize = buffer.size() * sizeof(uint32_t);
+    createInfo.pCode = buffer.data();
+
+    VkShaderModule shaderModule;
+    if(vkCreateShaderModule(_device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS)
+    {
+        return false;
+    }
+
+    *outShaderModule = shaderModule;
+    return true;
+}
+
 void VulkanEngine::init()
 {
     SDL_Init(SDL_INIT_VIDEO); // initialize window includes input events
@@ -186,6 +280,7 @@ void VulkanEngine::init()
     initDefaultRenderpass();
     initFramebuffers();
     initSyncStructures();
+    initPipelines();
 }
 
 void VulkanEngine::draw()
@@ -227,6 +322,9 @@ void VulkanEngine::draw()
     rpBeginInfo.pClearValues = &clearValue;
 
     vkCmdBeginRenderPass(cmd, &rpBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, _trianglePipeline);
+    vkCmdDraw(cmd, 3, 1, 0, 0);
 
     vkCmdEndRenderPass(cmd);
     VK_CHECK(vkEndCommandBuffer(cmd));
@@ -283,6 +381,7 @@ void VulkanEngine::run()
 
 void VulkanEngine::cleanup()
 {
+    // wait till GPU finishes
     vkDeviceWaitIdle(_device);
 
     vkDestroyCommandPool(_device, _commandPool, nullptr);
@@ -310,5 +409,56 @@ void VulkanEngine::cleanup()
     if(_window != nullptr)
     {
         SDL_DestroyWindow(_window);
+    }
+}
+
+VkPipeline PipelineBuilder::buildPipeline(VkDevice device, VkRenderPass pass)
+{
+    VkPipelineViewportStateCreateInfo viewportState = {};
+    viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+    viewportState.pNext = nullptr;
+
+    viewportState.viewportCount = 1;
+    viewportState.pViewports = &_viewport;
+    viewportState.scissorCount = 1;
+    viewportState.pScissors = &_scissor;
+
+    VkPipelineColorBlendStateCreateInfo colorBlending = {};
+    colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+    colorBlending.pNext = nullptr;
+
+    colorBlending.logicOpEnable = VK_FALSE;
+    colorBlending.logicOp = VK_LOGIC_OP_COPY;
+    colorBlending.attachmentCount = 1;
+    colorBlending.pAttachments = &_colorBlendAttachment;
+
+    VkGraphicsPipelineCreateInfo pipelineInfo = {};
+    pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+    pipelineInfo.pNext = nullptr;
+
+    pipelineInfo.stageCount = _shaderStages.size();
+    pipelineInfo.pStages = _shaderStages.data();
+    pipelineInfo.pVertexInputState = &_vertexInputInfo;
+    pipelineInfo.pInputAssemblyState = &_inputAssembly;
+    pipelineInfo.pViewportState = &viewportState;
+    pipelineInfo.pRasterizationState = &_rasterizer;
+    pipelineInfo.pMultisampleState = &_multisampling;
+    pipelineInfo.pColorBlendState = &colorBlending;
+    pipelineInfo.layout = _pipelineLayout;
+    pipelineInfo.renderPass = pass;
+    pipelineInfo.subpass = 0;
+    pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
+
+    VkPipeline newPipeline;
+    if(vkCreateGraphicsPipelines(
+        device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &newPipeline
+    ) != VK_SUCCESS)
+    {
+        std::cout << "Failed to create pipeline\n";
+        return VK_NULL_HANDLE;
+    }
+    else
+    {
+        return newPipeline;
     }
 }
