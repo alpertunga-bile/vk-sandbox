@@ -7,6 +7,7 @@
 #define VMA_IMPLEMENTATION
 #include <vma/vk_mem_alloc.h>
 
+#include <glm/gtx/transform.hpp>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_vulkan.h>
 #include <fstream>
@@ -299,6 +300,18 @@ void VulkanEngine::initPipelines()
     // ---------------------------------------------------------------------------------------------------------------
     // -- Mesh Triangle
     // ---------------------------------------------------------------------------------------------------------------
+    VkPipelineLayoutCreateInfo meshPipelineLayoutInfo = vkInit::pipelineLayoutCreateInfo();
+
+    VkPushConstantRange pushConstant;
+    pushConstant.offset = 0;
+    pushConstant.size = sizeof(MeshPushConstants);
+    pushConstant.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+    meshPipelineLayoutInfo.pPushConstantRanges = &pushConstant;
+    meshPipelineLayoutInfo.pushConstantRangeCount = 1;
+
+    VK_CHECK(vkCreatePipelineLayout(_device, &meshPipelineLayoutInfo, nullptr, &_meshPipelineLayout));
+
     VertexInputDescription vertexDescription = Vertex::getVertexDescription();
 
     pipelineBuilder._vertexInputInfo.pVertexAttributeDescriptions = vertexDescription.attributes.data();
@@ -337,6 +350,7 @@ void VulkanEngine::initPipelines()
         vkInit::pipelineShaderStageCreateInfo(VK_SHADER_STAGE_FRAGMENT_BIT, meshFragShader)
     );
 
+    pipelineBuilder._pipelineLayout = _meshPipelineLayout;
     _meshPipeline = pipelineBuilder.buildPipeline(_device, _renderpass);
 
     vkDestroyShaderModule(_device, redTriangleVertShader, nullptr);
@@ -352,6 +366,7 @@ void VulkanEngine::initPipelines()
         vkDestroyPipeline(_device, _meshPipeline, nullptr);
 
         vkDestroyPipelineLayout(_device, _trianglePipelineLayout, nullptr);
+        vkDestroyPipelineLayout(_device, _meshPipelineLayout, nullptr);
         });
 }
 
@@ -517,6 +532,21 @@ void VulkanEngine::draw()
 
         VkDeviceSize offset = 0;
         vkCmdBindVertexBuffers(cmd, 0, 1, &_triangleMesh._vertexBuffer._buffer, &offset);
+        
+        glm::vec3 camPos = { 0.0f, 0.0f, -2.0f };
+
+        glm::mat4 model = glm::rotate(glm::mat4(1.0f), glm::radians(_framenumber * 0.4f), glm::vec3(0, 1, 0));
+        glm::mat4 view = glm::translate(glm::mat4(1.0f), camPos);
+        glm::mat4 projection = glm::perspective(glm::radians(70.0f), 1700.f / 900.f, 0.1f, 200.0f);
+        
+        // for flip the triangle in y axis
+        //projection[1][1] *= -1;
+
+        MeshPushConstants constants;
+        constants.renderMatrix = projection * view * model;
+
+        vkCmdPushConstants(cmd, _meshPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(MeshPushConstants), &constants);
+
         vkCmdDraw(cmd, _triangleMesh._vertices.size(), 1, 0, 0);
     }
 

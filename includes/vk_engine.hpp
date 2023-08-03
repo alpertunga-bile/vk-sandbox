@@ -5,6 +5,13 @@
 #include <vector>
 #include <deque>
 #include <functional>
+#include <glm/glm.hpp>
+
+struct MeshPushConstants
+{
+    glm::vec4 data;
+    glm::mat4 renderMatrix;
+};
 
 struct DeletionQueue
 {
@@ -64,6 +71,8 @@ class VulkanEngine
         VmaAllocator _allocator;
         VkPipeline _meshPipeline;
         Mesh _triangleMesh;
+
+        VkPipelineLayout _meshPipelineLayout;
 
         float _framenumber = 0.0f;
         int _selectedShader{ 0 };
