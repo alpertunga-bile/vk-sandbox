@@ -1,6 +1,7 @@
 #pragma once
 
 #include "vk_types.hpp"
+#include "vk-mesh.hpp"
 #include <vector>
 #include <deque>
 #include <functional>
@@ -60,6 +61,10 @@ class VulkanEngine
 
         DeletionQueue _mainDeleteionQueue;
 
+        VmaAllocator _allocator;
+        VkPipeline _meshPipeline;
+        Mesh _triangleMesh;
+
         float _framenumber = 0.0f;
         int _selectedShader{ 0 };
 
@@ -78,6 +83,8 @@ class VulkanEngine
         void initSyncStructures();
         void initPipelines();
         bool loadShaderModule(const char* path, VkShaderModule& outShaderModule);
+        void loadMeshes();
+        void uploadMesh(Mesh& mesh);
 };
 
 class PipelineBuilder
