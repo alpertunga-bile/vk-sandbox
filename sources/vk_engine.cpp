@@ -170,23 +170,23 @@ void VulkanEngine::initSyncStructures()
 void VulkanEngine::initPipelines()
 {
     VkShaderModule triangleVertShader;
-    if(loadShaderModule("../shaders/triangle.vert.spv", &triangleVertShader))
+    if(!loadShaderModule("shaders/triangle_vert.spv", triangleVertShader))
     {
         std::cout << "Error building triangle.vert.spv shader\n";
     }
     else
     {
-        std::cout << "triangle.vert.spv is loaded\n";
+        std::cout << "triangle_vert.spv is loaded\n";
     }
 
     VkShaderModule triangleFragShader;
-    if(loadShaderModule("../shaders/triangle.frag.spv", &triangleFragShader))
+    if(!loadShaderModule("shaders/triangle_frag.spv", triangleFragShader))
     {
         std::cout << "Error building triangle.frag.spv shader\n";
     }
     else
     {
-        std::cout << "triangle.frag.spv is loaded\n";
+        std::cout << "triangle_frag.spv is loaded\n";
     }
 
     VkPipelineLayoutCreateInfo pipelineLayoutInfo = vkInit::pipelineLayoutCreateInfo();
@@ -225,7 +225,7 @@ void VulkanEngine::initPipelines()
     _trianglePipeline = pipelineBuilder.buildPipeline(_device, _renderpass);
 }
 
-bool VulkanEngine::loadShaderModule(const char *path, VkShaderModule *outShaderModule)
+bool VulkanEngine::loadShaderModule(const char *path, VkShaderModule& outShaderModule)
 {
     std::ifstream file(path, std::ios::ate | std::ios::binary);
 
@@ -255,7 +255,7 @@ bool VulkanEngine::loadShaderModule(const char *path, VkShaderModule *outShaderM
         return false;
     }
 
-    *outShaderModule = shaderModule;
+    outShaderModule = shaderModule;
     return true;
 }
 

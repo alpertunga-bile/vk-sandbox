@@ -50,7 +50,7 @@ class VulkanEngine
         void initFramebuffers();
         void initSyncStructures();
         void initPipelines();
-        bool loadShaderModule(const char* path, VkShaderModule* outShaderModule);
+        bool loadShaderModule(const char* path, VkShaderModule& outShaderModule);
 };
 
 class PipelineBuilder
