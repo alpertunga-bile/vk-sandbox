@@ -126,3 +126,23 @@ VkPipelineLayoutCreateInfo vkInit::pipelineLayoutCreateInfo()
 
     return info;
 }
+
+VkFenceCreateInfo vkInit::fenceCreateInfo(VkFenceCreateFlags flags)
+{
+    VkFenceCreateInfo info = {};
+    info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+    info.pNext = nullptr;
+    info.flags = flags;
+
+    return info;
+}
+
+VkSemaphoreCreateInfo vkInit::semaphoreCreateInfo(VkSemaphoreCreateFlags flags)
+{
+    VkSemaphoreCreateInfo info = {};
+    info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+    info.pNext = nullptr;
+    info.flags = flags;
+
+    return info;
+}
