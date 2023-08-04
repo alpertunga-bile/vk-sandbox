@@ -8,6 +8,8 @@
 #include <glm/glm.hpp>
 #include <unordered_map>
 
+constexpr unsigned int FRAME_OVERLAP = 2;
+
 struct MeshPushConstants
 {
     glm::vec4 data;
@@ -25,6 +27,15 @@ struct RenderObject
     Mesh* mesh;
     Material* material;
     glm::mat4 transformMatrix;
+};
+
+struct FrameData
+{
+    VkSemaphore _presentSemaphore, _renderSemaphore;
+    VkFence _renderFence;
+
+    VkCommandPool _commandPool;
+    VkCommandBuffer _mainCommandBuffer;
 };
 
 struct DeletionQueue
@@ -67,14 +78,8 @@ class VulkanEngine
         VkQueue _graphicsQueue;
         uint32_t _graphicsQueueFamily;
 
-        VkCommandPool _commandPool;
-        VkCommandBuffer _mainCommandBuffer;
-
         VkRenderPass _renderpass;
         std::vector<VkFramebuffer> _framebuffers;
-
-        VkSemaphore _presentSemaphore, _renderSemaphore;
-        VkFence _renderFence;
 
         DeletionQueue _mainDeleteionQueue;
 
@@ -94,10 +99,12 @@ class VulkanEngine
         std::unordered_map<std::string, Material> _materials;
         std::unordered_map<std::string, Mesh> _meshes;
 
-        float _framenumber = 0.0f;
+        unsigned int _framenumber = 0;
         int _selectedShader{ 0 };
         glm::vec3 _camPos = { 0.0f, -6.0f, -10.0f };
-        glm::vec3 _camRot = { 0.0f, 0.0f, 0.0f };
+        
+        FrameData _frames[FRAME_OVERLAP];
+        FrameData& getCurrentFrame();
 
     public:
         void init();
