@@ -19,4 +19,11 @@ namespace vkInit
     // -- Sync ------------------------
     VkFenceCreateInfo fenceCreateInfo(VkFenceCreateFlags flags = 0);
     VkSemaphoreCreateInfo semaphoreCreateInfo(VkSemaphoreCreateFlags flags = 0);
+
+    // -- Image ------------------------
+    VkImageCreateInfo imageCreateInfo(VkFormat format, VkImageUsageFlags flags, VkExtent3D extent);
+    VkImageViewCreateInfo imageviewCreateInfo(VkFormat format, VkImage image, VkImageAspectFlags aspectFlags);
+
+    // -- Depth ------------------------
+    VkPipelineDepthStencilStateCreateInfo depthStencilCreateInfo(bool bDepthTest, bool bDepthWrite, VkCompareOp compareOp);
 }

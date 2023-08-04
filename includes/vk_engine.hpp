@@ -6,11 +6,25 @@
 #include <deque>
 #include <functional>
 #include <glm/glm.hpp>
+#include <unordered_map>
 
 struct MeshPushConstants
 {
     glm::vec4 data;
     glm::mat4 renderMatrix;
+};
+
+struct Material
+{
+    VkPipeline pipeline;
+    VkPipelineLayout pipelineLayout;
+};
+
+struct RenderObject
+{
+    Mesh* mesh;
+    Material* material;
+    glm::mat4 transformMatrix;
 };
 
 struct DeletionQueue
@@ -74,6 +88,16 @@ class VulkanEngine
 
         VkPipelineLayout _meshPipelineLayout;
 
+        Mesh _modelMesh;
+
+        VkImageView _depthImageView;
+        AllocatedImage _depthImage;
+        VkFormat _depthFormat;
+
+        std::vector<RenderObject> _renderables;
+        std::unordered_map<std::string, Material> _materials;
+        std::unordered_map<std::string, Mesh> _meshes;
+
         float _framenumber = 0.0f;
         int _selectedShader{ 0 };
 
@@ -94,6 +118,11 @@ class VulkanEngine
         bool loadShaderModule(const char* path, VkShaderModule& outShaderModule);
         void loadMeshes();
         void uploadMesh(Mesh& mesh);
+        Material* createMaterial(VkPipeline pipeline, VkPipelineLayout layout, const std::string& name);
+        Material* getMaterial(const std::string& name);
+        Mesh* getMesh(const std::string& name);
+        void drawObjects(VkCommandBuffer cmd, RenderObject* first, int count);
+        void initScene();
 };
 
 class PipelineBuilder
@@ -108,6 +137,7 @@ public:
     VkPipelineColorBlendAttachmentState _colorBlendAttachment;
     VkPipelineMultisampleStateCreateInfo _multisampling;
     VkPipelineLayout _pipelineLayout;
+    VkPipelineDepthStencilStateCreateInfo _depthStencil;
 
     VkPipeline buildPipeline(VkDevice device, VkRenderPass pass);
 };
