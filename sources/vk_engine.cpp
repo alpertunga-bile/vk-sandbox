@@ -296,9 +296,6 @@ void VulkanEngine::initPipelines()
         std::cout << "colored_triangle_frag.spv is loaded\n";
     }
 
-    VkPipelineLayoutCreateInfo pipelineLayoutInfo = vkInit::pipelineLayoutCreateInfo();
-
-    VK_CHECK(vkCreatePipelineLayout(_device, &pipelineLayoutInfo, nullptr, &_trianglePipelineLayout));
 
     PipelineBuilder pipelineBuilder;
 
@@ -327,10 +324,6 @@ void VulkanEngine::initPipelines()
     pipelineBuilder._multisampling = vkInit::multisamplingStateCreateInfo();
     pipelineBuilder._colorBlendAttachment = vkInit::colorBlendAttachmentState();
 
-    pipelineBuilder._pipelineLayout = _trianglePipelineLayout;
-
-    _trianglePipeline = pipelineBuilder.buildPipeline(_device, _renderpass);
-
     // ---------------------------------------------------------------------------------------------------------------
     // -- Red Triangle
     // ---------------------------------------------------------------------------------------------------------------
@@ -354,19 +347,6 @@ void VulkanEngine::initPipelines()
     {
         std::cout << "red_triangle_frag.spv is loaded\n";
     }
-
-
-    pipelineBuilder._shaderStages.clear();
-
-    pipelineBuilder._shaderStages.push_back(
-        vkInit::pipelineShaderStageCreateInfo(VK_SHADER_STAGE_VERTEX_BIT, redTriangleVertShader)
-    );
-
-    pipelineBuilder._shaderStages.push_back(
-        vkInit::pipelineShaderStageCreateInfo(VK_SHADER_STAGE_FRAGMENT_BIT, redTriangleFragShader)
-    );
-
-    _redTrianglePipeline = pipelineBuilder.buildPipeline(_device, _renderpass);
 
     // ---------------------------------------------------------------------------------------------------------------
     // -- Mesh
@@ -438,11 +418,8 @@ void VulkanEngine::initPipelines()
     vkDestroyShaderModule(_device, meshFragShader, nullptr);
 
     _mainDeleteionQueue.pushFunction([=]() {
-        vkDestroyPipeline(_device, _redTrianglePipeline, nullptr);
-        vkDestroyPipeline(_device, _trianglePipeline, nullptr);
         vkDestroyPipeline(_device, _meshPipeline, nullptr);
 
-        vkDestroyPipelineLayout(_device, _trianglePipelineLayout, nullptr);
         vkDestroyPipelineLayout(_device, _meshPipelineLayout, nullptr);
         });
 }
@@ -500,7 +477,7 @@ void VulkanEngine::loadMeshes()
     uploadMesh(_modelMesh);
 
     _meshes["monkey"] = _modelMesh;
-    _meshes["triangle"] = _triangleMesh;
+    _meshes["triangle"] = _modelMesh;
 }
 
 void VulkanEngine::uploadMesh(Mesh& mesh)
@@ -566,8 +543,7 @@ Mesh* VulkanEngine::getMesh(const std::string& name)
 
 void VulkanEngine::drawObjects(VkCommandBuffer cmd, RenderObject* first, int count)
 {
-    glm::vec3 camPos = { 0.0f, -6.0f, -10.0f };
-    glm::mat4 view = glm::translate(glm::mat4{1.0f}, camPos);
+    glm::mat4 view = glm::translate(glm::mat4{1.0f}, _camPos);
     glm::mat4 projection = glm::perspective(
         glm::radians(70.0f), 1700.0f / 900.0f, 0.1f, 200.0f
     );
@@ -700,20 +676,7 @@ void VulkanEngine::draw()
 
     vkCmdBeginRenderPass(cmd, &rpBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-    if (_selectedShader == 0)
-    {
-        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, _trianglePipeline);
-        vkCmdDraw(cmd, 3, 1, 0, 0);
-    }
-    else if (_selectedShader == 1)
-    {
-        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, _redTrianglePipeline);
-        vkCmdDraw(cmd, 3, 1, 0, 0);
-    }
-    else if (_selectedShader == 2)
-    {
-        drawObjects(cmd, _renderables.data(), _renderables.size());
-    }
+    drawObjects(cmd, _renderables.data(), _renderables.size());
 
     vkCmdEndRenderPass(cmd);
     VK_CHECK(vkEndCommandBuffer(cmd));
@@ -771,6 +734,30 @@ void VulkanEngine::run()
                     {
                         _selectedShader = 0;
                     }
+                }
+                if (event.key.keysym.sym == SDLK_w)
+                {
+                    _camPos.z += 3.0f;
+                }
+                if (event.key.keysym.sym == SDLK_s)
+                {
+                    _camPos.z -= 3.0f;
+                }
+                if (event.key.keysym.sym == SDLK_a)
+                {
+                    _camPos.x += 3.0f;
+                }
+                if (event.key.keysym.sym == SDLK_d)
+                {
+                    _camPos.x -= 3.0f;
+                }
+                if (event.key.keysym.sym == SDLK_SPACE)
+                {
+                    _camPos.y -= 2.0f;
+                }
+                if (event.key.keysym.sym == SDLK_LSHIFT)
+                {
+                    _camPos.y += 2.0f;
                 }
             }
         }

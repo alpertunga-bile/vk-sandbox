@@ -76,10 +76,6 @@ class VulkanEngine
         VkSemaphore _presentSemaphore, _renderSemaphore;
         VkFence _renderFence;
 
-        VkPipelineLayout _trianglePipelineLayout;
-        VkPipeline _trianglePipeline;
-        VkPipeline _redTrianglePipeline;
-
         DeletionQueue _mainDeleteionQueue;
 
         VmaAllocator _allocator;
@@ -100,6 +96,8 @@ class VulkanEngine
 
         float _framenumber = 0.0f;
         int _selectedShader{ 0 };
+        glm::vec3 _camPos = { 0.0f, -6.0f, -10.0f };
+        glm::vec3 _camRot = { 0.0f, 0.0f, 0.0f };
 
     public:
         void init();
