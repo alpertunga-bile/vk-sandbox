@@ -29,6 +29,13 @@ struct RenderObject
     glm::mat4 transformMatrix;
 };
 
+struct GPUCameraData
+{
+    glm::mat4 view;
+    glm::mat4 proj;
+    glm::mat4 viewproj;
+};
+
 struct FrameData
 {
     VkSemaphore _presentSemaphore, _renderSemaphore;
@@ -36,6 +43,9 @@ struct FrameData
 
     VkCommandPool _commandPool;
     VkCommandBuffer _mainCommandBuffer;
+
+    AllocatedBuffer cameraBuffer;
+    VkDescriptorSet globalDescriptor;
 };
 
 struct DeletionQueue
@@ -104,8 +114,10 @@ class VulkanEngine
         glm::vec3 _camPos = { 0.0f, -6.0f, -10.0f };
         
         FrameData _frames[FRAME_OVERLAP];
-        FrameData& getCurrentFrame();
 
+        VkDescriptorSetLayout _globalSetLayout;
+        VkDescriptorPool _descriptorPool;
+        
     public:
         void init();
         void cleanup();
@@ -128,6 +140,9 @@ class VulkanEngine
         Mesh* getMesh(const std::string& name);
         void drawObjects(VkCommandBuffer cmd, RenderObject* first, int count);
         void initScene();
+        FrameData& getCurrentFrame();
+        AllocatedBuffer createBuffer(size_t allocSize, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage);
+        void init_descriptors();
 };
 
 class PipelineBuilder

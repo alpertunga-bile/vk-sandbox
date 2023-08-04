@@ -368,6 +368,9 @@ void VulkanEngine::initPipelines()
     meshPipelineLayoutInfo.pPushConstantRanges = &pushConstant;
     meshPipelineLayoutInfo.pushConstantRangeCount = 1;
 
+    meshPipelineLayoutInfo.setLayoutCount = 1;
+    meshPipelineLayoutInfo.pSetLayouts = &_globalSetLayout;
+
     VK_CHECK(vkCreatePipelineLayout(_device, &meshPipelineLayoutInfo, nullptr, &_meshPipelineLayout));
 
     VertexInputDescription vertexDescription = Vertex::getVertexDescription();
@@ -484,7 +487,7 @@ void VulkanEngine::loadMeshes()
     uploadMesh(_modelMesh);
 
     _meshes["monkey"] = _modelMesh;
-    _meshes["triangle"] = _modelMesh;
+    _meshes["triangle"] = _triangleMesh;
 }
 
 void VulkanEngine::uploadMesh(Mesh& mesh)
@@ -612,6 +615,103 @@ void VulkanEngine::initScene()
     }
 }
 
+AllocatedBuffer VulkanEngine::createBuffer(size_t allocSize, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage)
+{
+    VkBufferCreateInfo bufferInfo = {};
+    bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    bufferInfo.pNext = nullptr;
+
+    bufferInfo.size = allocSize;
+    bufferInfo.usage = usage;
+
+    VmaAllocationCreateInfo vmaallocInfo = {};
+    vmaallocInfo.usage = memoryUsage;
+
+    AllocatedBuffer newBuffer;
+
+    VK_CHECK(vmaCreateBuffer(
+        _allocator, &bufferInfo, &vmaallocInfo,
+        &newBuffer._buffer, &newBuffer._allocation, nullptr
+    ));
+
+    return newBuffer;
+}
+
+void VulkanEngine::init_descriptors()
+{
+    std::vector<VkDescriptorPoolSize> sizes =
+    {
+        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 10}
+    };
+
+    VkDescriptorPoolCreateInfo poolInfo = {};
+    poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    poolInfo.flags = 0;
+    poolInfo.maxSets = 10;
+    poolInfo.poolSizeCount = (uint32_t)sizes.size();
+    poolInfo.pPoolSizes = sizes.data();
+
+    vkCreateDescriptorPool(_device, &poolInfo, nullptr, &_descriptorPool);
+
+    VkDescriptorSetLayoutBinding camBufferBinding = {};
+    camBufferBinding.binding = 0;
+    camBufferBinding.descriptorCount = 1;
+    camBufferBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    camBufferBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+    VkDescriptorSetLayoutCreateInfo setInfo = {};
+    setInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    setInfo.pNext = nullptr;
+    setInfo.bindingCount = 1;
+    setInfo.flags = 0;
+    setInfo.pBindings = &camBufferBinding;
+
+    vkCreateDescriptorSetLayout(_device, &setInfo, nullptr, &_globalSetLayout);
+
+    for (int i = 0; i < FRAME_OVERLAP; i++)
+    {
+        _frames[i].cameraBuffer = createBuffer(sizeof(GPUCameraData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+    
+        VkDescriptorSetAllocateInfo allocInfo = {};
+        allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+        allocInfo.pNext = nullptr;
+        allocInfo.descriptorPool = _descriptorPool;
+        allocInfo.descriptorSetCount = 1;
+        allocInfo.pSetLayouts = &_globalSetLayout;
+
+        vkAllocateDescriptorSets(_device, &allocInfo, &_frames[i].globalDescriptor);
+    
+        VkDescriptorBufferInfo bInfo = {};
+        bInfo.buffer = _frames[i].cameraBuffer._buffer;
+        bInfo.offset = 0;
+        bInfo.range = sizeof(GPUCameraData);
+
+        VkWriteDescriptorSet setWrite = {};
+        setWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        setWrite.pNext = nullptr;
+
+        setWrite.dstBinding = 0;
+        setWrite.dstSet = _frames[i].globalDescriptor;
+        setWrite.descriptorCount = 1;
+        setWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        setWrite.pBufferInfo = &bInfo;
+
+        vkUpdateDescriptorSets(_device, 1, &setWrite, 0, nullptr);
+    }
+
+    for (int i = 0; i < FRAME_OVERLAP; i++)
+    {
+        _mainDeleteionQueue.pushFunction([=]() {
+            vmaDestroyBuffer(_allocator, _frames[i].cameraBuffer._buffer, _frames[i].cameraBuffer._allocation);
+            });
+    }
+
+    _mainDeleteionQueue.pushFunction([=]() {
+        vkDestroyDescriptorSetLayout(_device, _globalSetLayout, nullptr);
+        vkDestroyDescriptorPool(_device, _descriptorPool, nullptr);
+        });
+}
+
 FrameData& VulkanEngine::getCurrentFrame()
 {
     return _frames[_framenumber % FRAME_OVERLAP];
@@ -638,6 +738,7 @@ void VulkanEngine::init()
     initDefaultRenderpass();
     initFramebuffers();
     initSyncStructures();
+    init_descriptors();
     initPipelines();
 
     loadMeshes();
