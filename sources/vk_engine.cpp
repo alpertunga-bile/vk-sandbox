@@ -559,6 +559,16 @@ void VulkanEngine::drawObjects(VkCommandBuffer cmd, RenderObject* first, int cou
     );
     projection[1][1] *= -1;
 
+    GPUCameraData camData;
+    camData.proj = projection;
+    camData.view = view;
+    camData.viewproj = projection * view;
+
+    void* data;
+    vmaMapMemory(_allocator, getCurrentFrame().cameraBuffer._allocation, &data);
+    memcpy(data, &camData, sizeof(GPUCameraData));
+    vmaUnmapMemory(_allocator, getCurrentFrame().cameraBuffer._allocation);
+
     Mesh* lastMesh = nullptr;
     Material* lastMaterial = nullptr;
     for (int i = 0; i < count; i++)
@@ -569,13 +579,14 @@ void VulkanEngine::drawObjects(VkCommandBuffer cmd, RenderObject* first, int cou
         {
             vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, object.material->pipeline);
             lastMaterial = object.material;
+            vkCmdBindDescriptorSets(cmd,
+                VK_PIPELINE_BIND_POINT_GRAPHICS,
+                object.material->pipelineLayout,
+                0, 1, &getCurrentFrame().globalDescriptor, 0, nullptr);
         }
 
-        glm::mat4 model = object.transformMatrix;
-        glm::mat4 meshMatrix = projection * view * model;
-
         MeshPushConstants constants;
-        constants.renderMatrix = meshMatrix;
+        constants.renderMatrix = object.transformMatrix;
 
         vkCmdPushConstants(cmd, object.material->pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(MeshPushConstants), &constants);
 
