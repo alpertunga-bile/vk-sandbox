@@ -45,6 +45,11 @@ struct GPUSceneData
     glm::vec4 sunlightColor;
 };
 
+struct GPUObjectData
+{
+    glm::mat4 modelMatrix;
+};
+
 struct FrameData
 {
     VkSemaphore _presentSemaphore, _renderSemaphore;
@@ -55,6 +60,9 @@ struct FrameData
 
     AllocatedBuffer cameraBuffer;
     VkDescriptorSet globalDescriptor;
+
+    AllocatedBuffer objectBuffer;
+    VkDescriptorSet objectDescriptor;
 };
 
 struct DeletionQueue
@@ -131,6 +139,8 @@ class VulkanEngine
 
         GPUSceneData _sceneParameters;
         AllocatedBuffer _sceneParameterBuffer;
+
+        VkDescriptorSetLayout _objectSetLayout;
         
     public:
         void init();
