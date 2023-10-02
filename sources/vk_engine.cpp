@@ -824,7 +824,7 @@ void VulkanEngine::init_descriptors()
     for (int i = 0; i < FRAME_OVERLAP; i++)
     {
         _mainDeleteionQueue.pushFunction([=]() {
-            vmaDestroyBuffer(_allocator, _frames[i].cameraBuffer._buffer, _frames[i].objectBuffer._allocation);
+            vmaDestroyBuffer(_allocator, _frames[i].objectBuffer._buffer, _frames[i].objectBuffer._allocation);
             vmaDestroyBuffer(_allocator, _frames[i].cameraBuffer._buffer, _frames[i].cameraBuffer._allocation);
             });
     }
