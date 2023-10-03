@@ -10,6 +10,19 @@
 
 constexpr unsigned int FRAME_OVERLAP = 2;
 
+struct Texture
+{
+    AllocatedImage image;
+    VkImageView imageView;
+};
+
+struct UploadContext
+{
+    VkFence uploadFence;
+    VkCommandPool commandPool;
+    VkCommandBuffer commandBuffer;
+};
+
 struct MeshPushConstants
 {
     glm::vec4 data;
@@ -18,6 +31,7 @@ struct MeshPushConstants
 
 struct Material
 {
+    VkDescriptorSet textureSet{ VK_NULL_HANDLE };
     VkPipeline pipeline;
     VkPipelineLayout pipelineLayout;
 };
@@ -87,6 +101,10 @@ struct DeletionQueue
 
 class VulkanEngine
 {
+public:
+    VmaAllocator _allocator;
+    DeletionQueue _mainDeleteionQueue;
+
     private:
         VkExtent2D _windowExtent{1280, 720};
         struct SDL_Window* _window{nullptr};
@@ -108,9 +126,6 @@ class VulkanEngine
         VkRenderPass _renderpass;
         std::vector<VkFramebuffer> _framebuffers;
 
-        DeletionQueue _mainDeleteionQueue;
-
-        VmaAllocator _allocator;
         VkPipeline _meshPipeline;
         Mesh _triangleMesh;
 
@@ -141,12 +156,21 @@ class VulkanEngine
         AllocatedBuffer _sceneParameterBuffer;
 
         VkDescriptorSetLayout _objectSetLayout;
+
+        UploadContext _uploadContext;
         
+        std::unordered_map<std::string, Texture> _loadedTextures;
+
+        VkDescriptorSetLayout _singleTextureSetLayout;
+
     public:
         void init();
         void cleanup();
         void draw();
         void run();
+
+        AllocatedBuffer createBuffer(size_t allocSize, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage);
+        void immediateSubmit(std::function<void(VkCommandBuffer cmd)>&& function);
 
     private:
         void initVulkan();
@@ -165,9 +189,9 @@ class VulkanEngine
         void drawObjects(VkCommandBuffer cmd, RenderObject* first, int count);
         void initScene();
         FrameData& getCurrentFrame();
-        AllocatedBuffer createBuffer(size_t allocSize, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage);
         void init_descriptors();
         size_t padUniformBufferSize(size_t originalSize);
+        void loadImages();
 };
 
 class PipelineBuilder

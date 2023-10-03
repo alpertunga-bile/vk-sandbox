@@ -3,8 +3,10 @@
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec3 normal;
 layout(location = 2) in vec3 color;
+layout(location = 3) in vec2 vTexCoords;
 
 layout(location = 0) out vec3 outColor;
+layout(location = 1) out vec2 texCoords;
 
 layout(set = 0, binding = 0) uniform CameraBuffer
 {
@@ -35,4 +37,5 @@ void main()
 	mat4 transformMatrix = (cameraData.viewproj * modelMatrix);
 	gl_Position = transformMatrix * vec4(position, 1.0f);
 	outColor = color;
+	texCoords = vTexCoords;
 }
