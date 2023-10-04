@@ -15,6 +15,10 @@
 #include <iostream>
 #include "vk_engine.hpp"
 
+#include "imgui.h"
+#include "backends/imgui_impl_sdl2.h"
+#include "backends/imgui_impl_vulkan.h"
+
 /*
 Define check macro
 */
@@ -93,6 +97,61 @@ void VulkanEngine::initVulkan()
 
 	_gpuProperties = vkbDevice.physical_device.properties;
 	std::cout << "GPU has a min buffer alignment of " << _gpuProperties.limits.minUniformBufferOffsetAlignment << "\n";
+}
+
+void VulkanEngine::initImgui()
+{
+	VkDescriptorPoolSize poolSizes[] =
+	{
+		{ VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
+		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
+		{ VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
+		{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
+		{ VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
+		{ VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
+		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
+		{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
+		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
+		{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
+		{ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
+	};
+
+	VkDescriptorPoolCreateInfo poolInfo = {};
+	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+	poolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+	poolInfo.maxSets = 1000;
+	poolInfo.poolSizeCount = std::size(poolSizes);
+	poolInfo.pPoolSizes = poolSizes;
+
+	VkDescriptorPool imguiPool;
+	VK_CHECK(vkCreateDescriptorPool(_device, &poolInfo, nullptr, &imguiPool));
+
+	ImGui::CreateContext();
+
+	ImGui_ImplSDL2_InitForVulkan(_window);
+
+	ImGui_ImplVulkan_InitInfo initInfo = {};
+	initInfo.Instance = _instance;
+	initInfo.PhysicalDevice = _physicalDevice;
+	initInfo.Device = _device;
+	initInfo.Queue = _graphicsQueue;
+	initInfo.DescriptorPool = imguiPool;
+	initInfo.MinImageCount = 3;
+	initInfo.ImageCount = 3;
+	initInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+
+	ImGui_ImplVulkan_Init(&initInfo, _renderpass);
+
+	immediateSubmit([&](VkCommandBuffer cmd) {
+		ImGui_ImplVulkan_CreateFontsTexture(cmd);
+		});
+
+	ImGui_ImplVulkan_DestroyFontUploadObjects();
+
+	_mainDeleteionQueue.pushFunction([=]() {
+		vkDestroyDescriptorPool(_device, imguiPool, nullptr);
+		ImGui_ImplVulkan_Shutdown();
+		});
 }
 
 void VulkanEngine::initSwapchain()
@@ -1030,6 +1089,8 @@ void VulkanEngine::init()
 	init_descriptors();
 	initPipelines();
 
+	initImgui();
+
 	loadImages();
 	loadMeshes();
 	initScene();
@@ -1037,6 +1098,8 @@ void VulkanEngine::init()
 
 void VulkanEngine::draw()
 {
+	ImGui::Render();
+
 	FrameData& currentFrame = getCurrentFrame();
 	VK_CHECK(vkWaitForFences(_device, 1, &currentFrame._renderFence, true, 1000000000));
 	VK_CHECK(vkResetFences(_device, 1, &currentFrame._renderFence));
@@ -1079,6 +1142,8 @@ void VulkanEngine::draw()
 	vkCmdBeginRenderPass(cmd, &rpBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 	drawObjects(cmd, _renderables.data(), _renderables.size());
+
+	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmd);
 
 	vkCmdEndRenderPass(cmd);
 	VK_CHECK(vkEndCommandBuffer(cmd));
@@ -1125,6 +1190,8 @@ void VulkanEngine::run()
 		// handling events
 		while (SDL_PollEvent(&event) != 0)
 		{
+			ImGui_ImplSDL2_ProcessEvent(&event);
+
 			if (event.type == SDL_QUIT)
 			{
 				isQuit = true;
@@ -1165,6 +1232,13 @@ void VulkanEngine::run()
 				}
 			}
 		}
+
+		ImGui_ImplVulkan_NewFrame();
+		ImGui_ImplSDL2_NewFrame(_window);
+
+		ImGui::NewFrame();
+
+		ImGui::ShowDemoWindow();
 
 		draw();
 	}

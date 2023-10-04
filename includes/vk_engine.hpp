@@ -174,6 +174,7 @@ public:
 
     private:
         void initVulkan();
+        void initImgui();
         void initSwapchain();
         void initCommands();
         void initDefaultRenderpass();
