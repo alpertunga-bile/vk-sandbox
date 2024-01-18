@@ -1,3 +1,3 @@
 # vk-sandbox
 
-- Based on vk-guide tutorial
+- Based on the new vk-guide tutorial
