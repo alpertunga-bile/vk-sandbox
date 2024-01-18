@@ -1,37 +1,55 @@
 #pragma once
+
 #include "vk_types.hpp"
 
-namespace vkInit
-{
-    // -- Command ------------------------
-    VkCommandPoolCreateInfo commandPoolCreateInfo(uint32_t queueFamilyIndex, VkCommandPoolCreateFlags flags=0);
-    VkCommandBufferAllocateInfo commandBufferAllocateInfo(VkCommandPool commandPool, uint32_t count = 1, VkCommandBufferLevel level = VK_COMMAND_BUFFER_LEVEL_PRIMARY);   
-    VkCommandBufferBeginInfo commandBufferBeginInfo(VkCommandBufferUsageFlags flags = 0);
-    VkSubmitInfo submitInfo(VkCommandBuffer* cmd);
+namespace vk_init {
+VkCommandPoolCreateInfo
+command_pool_create_info(uint32_t                 queue_family_index,
+                         VkCommandPoolCreateFlags flags = 0);
+VkCommandBufferAllocateInfo
+command_buffer_allocate_info(VkCommandPool pool, uint32_t count = 1);
 
-    // -- Pipeline ------------------------
-    VkPipelineShaderStageCreateInfo pipelineShaderStageCreateInfo(VkShaderStageFlagBits stage, VkShaderModule shaderModule);
-    VkPipelineVertexInputStateCreateInfo vertexInputStateCreateInfo();
-    VkPipelineInputAssemblyStateCreateInfo inputAssemblyCreateInfo(VkPrimitiveTopology topology);
-    VkPipelineRasterizationStateCreateInfo rasterizationStateCreateInfo(VkPolygonMode polygonMode);
-    VkPipelineMultisampleStateCreateInfo multisamplingStateCreateInfo();
-    VkPipelineColorBlendAttachmentState colorBlendAttachmentState();
-    VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo();
+VkFenceCreateInfo
+fence_create_info(VkFenceCreateFlags flags = 0);
+VkSemaphoreCreateInfo
+semaphore_create_info(VkSemaphoreCreateFlags flags = 0);
 
-    // -- Sync ------------------------
-    VkFenceCreateInfo fenceCreateInfo(VkFenceCreateFlags flags = 0);
-    VkSemaphoreCreateInfo semaphoreCreateInfo(VkSemaphoreCreateFlags flags = 0);
+VkCommandBufferBeginInfo
+command_buffer_begin_info(VkCommandBufferUsageFlags flags = 0);
 
-    // -- Image ------------------------
-    VkImageCreateInfo imageCreateInfo(VkFormat format, VkImageUsageFlags flags, VkExtent3D extent);
-    VkImageViewCreateInfo imageviewCreateInfo(VkFormat format, VkImage image, VkImageAspectFlags aspectFlags);
-    VkSamplerCreateInfo samplerCreateInfo(VkFilter filters, VkSamplerAddressMode samplerAddressMode = VK_SAMPLER_ADDRESS_MODE_REPEAT);
-    VkWriteDescriptorSet writeDescriptorImage(VkDescriptorType type, VkDescriptorSet dstSet, VkDescriptorImageInfo* imageInfo, uint32_t binding);
+VkImageSubresourceRange
+image_subresource_range(VkImageAspectFlags flags);
+VkImageCreateInfo
+image_create_info(VkFormat          format,
+                  VkImageUsageFlags usage_flags,
+                  VkExtent3D        extent);
+VkImageViewCreateInfo
+image_view_create_info(VkFormat           format,
+                       VkImage            image,
+                       VkImageAspectFlags aspect_flags);
 
-    // -- Depth ------------------------
-    VkPipelineDepthStencilStateCreateInfo depthStencilCreateInfo(bool bDepthTest, bool bDepthWrite, VkCompareOp compareOp);
+VkSemaphoreSubmitInfo
+semaphore_submit_info(VkPipelineStageFlags2 stage_mask, VkSemaphore semaphore);
+VkCommandBufferSubmitInfo
+command_buffer_submit_info(VkCommandBuffer cmd);
 
-    // -- Descriptor ------------------------
-    VkDescriptorSetLayoutBinding descriptorSetLayoutBinding(VkDescriptorType type, VkShaderStageFlags stageFlags, uint32_t binding);
-    VkWriteDescriptorSet writeDescriptorBuffer(VkDescriptorType type, VkDescriptorSet dstSet, VkDescriptorBufferInfo* bufferInfo, uint32_t binding);
+VkSubmitInfo2
+submit_info(VkCommandBufferSubmitInfo* cbsi,
+            VkSemaphoreSubmitInfo*     signal_semaphore_info,
+            VkSemaphoreSubmitInfo*     wait_semaphore_info);
+
+VkRenderingAttachmentInfo
+attachment_info(VkImageView view, VkClearValue* clear, VkImageLayout layout);
+
+VkRenderingInfo
+rendering_info(VkExtent2D                 render_extent,
+               VkRenderingAttachmentInfo* color_attach,
+               VkRenderingAttachmentInfo* depth_attach);
+
+VkPipelineShaderStageCreateInfo
+pipeline_shader_stage_create_info(VkShaderStageFlagBits shader_stage,
+                                  VkShaderModule        shader_module);
+
+VkPipelineLayoutCreateInfo
+pipeline_layout_create_info();
 }

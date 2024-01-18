@@ -1,13 +1,15 @@
-#include <iostream>
-#include "includes/vk_engine.hpp"
+#include "vk_engine.hpp"
 
-int main()
+int
+main()
 {
-    VulkanEngine engine;
+  VulkanEngine engine;
 
-    engine.init();
-    engine.run();
-    engine.cleanup();
+  engine.init();
 
-    return 0;
+  engine.run();
+
+  engine.cleanup();
+
+  return 0;
 }

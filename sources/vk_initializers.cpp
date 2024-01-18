@@ -1,286 +1,236 @@
-#include "../includes/vk_initializers.hpp"
 #include "vk_initializers.hpp"
 
-VkCommandPoolCreateInfo vkInit::commandPoolCreateInfo(uint32_t queueFamilyIndex, VkCommandPoolCreateFlags flags)
+namespace vk_init {
+VkCommandPoolCreateInfo
+command_pool_create_info(uint32_t                 queue_family_index,
+                         VkCommandPoolCreateFlags flags)
 {
-    VkCommandPoolCreateInfo info = {};
-    info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-    info.pNext = nullptr;
-    info.queueFamilyIndex = queueFamilyIndex;
-    info.flags = flags;
+  VkCommandPoolCreateInfo cpci = {};
+  cpci.sType                   = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+  cpci.pNext                   = nullptr;
+  cpci.queueFamilyIndex        = queue_family_index;
+  cpci.flags                   = flags;
 
-    return info;
+  return cpci;
 }
 
-VkCommandBufferAllocateInfo vkInit::commandBufferAllocateInfo(VkCommandPool commandPool, uint32_t count, VkCommandBufferLevel level)
+VkCommandBufferAllocateInfo
+command_buffer_allocate_info(VkCommandPool pool, uint32_t count)
 {
-    VkCommandBufferAllocateInfo info = {};
-    info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    info.pNext = nullptr;
-    info.commandPool = commandPool;
-    info.commandBufferCount = count;
-    info.level = level;
+  VkCommandBufferAllocateInfo cbai = {};
+  cbai.sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+  cbai.pNext              = nullptr;
+  cbai.commandPool        = pool;
+  cbai.commandBufferCount = count;
+  cbai.level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 
-    return info;
+  return cbai;
 }
 
-VkCommandBufferBeginInfo vkInit::commandBufferBeginInfo(VkCommandBufferUsageFlags flags)
+VkSemaphoreCreateInfo
+semaphore_create_info(VkSemaphoreCreateFlags flags)
 {
-    VkCommandBufferBeginInfo info = {};
-    info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    info.pNext = nullptr;
-    info.pInheritanceInfo = nullptr;
-    info.flags = flags;
+  VkSemaphoreCreateInfo sci = {};
+  sci.sType                 = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+  sci.pNext                 = nullptr;
+  sci.flags                 = flags;
 
-    return info;
+  return sci;
 }
 
-VkSubmitInfo vkInit::submitInfo(VkCommandBuffer* cmd)
+VkCommandBufferBeginInfo
+command_buffer_begin_info(VkCommandBufferUsageFlags flags)
 {
-    VkSubmitInfo info = {};
-    info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    info.pNext = nullptr;
-    info.waitSemaphoreCount = 0;
-    info.pWaitSemaphores = nullptr;
-    info.pWaitDstStageMask = nullptr;
-    info.commandBufferCount = 1;
-    info.pCommandBuffers = cmd;
-    info.signalSemaphoreCount = 0;
-    info.pSignalSemaphores = nullptr;
+  VkCommandBufferBeginInfo cbbi = {};
+  cbbi.sType                    = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+  cbbi.pNext                    = nullptr;
+  cbbi.flags                    = flags;
+  cbbi.pInheritanceInfo         = nullptr;
 
-    return info;
+  return cbbi;
 }
 
-VkPipelineShaderStageCreateInfo vkInit::pipelineShaderStageCreateInfo(VkShaderStageFlagBits stage, VkShaderModule shaderModule)
+VkImageSubresourceRange
+image_subresource_range(VkImageAspectFlags flags)
 {
-    VkPipelineShaderStageCreateInfo info = {};
-    info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    info.pNext = nullptr;
+  VkImageSubresourceRange isr = {};
+  isr.aspectMask              = flags;
+  isr.baseMipLevel            = 0;
+  isr.levelCount              = VK_REMAINING_MIP_LEVELS;
+  isr.baseArrayLayer          = 0;
+  isr.layerCount              = VK_REMAINING_ARRAY_LAYERS;
 
-    info.stage = stage;
-    info.module = shaderModule;
-    info.pName = "main";
-
-    return info;
+  return isr;
 }
 
-VkPipelineVertexInputStateCreateInfo vkInit::vertexInputStateCreateInfo()
+VkImageCreateInfo
+image_create_info(VkFormat          format,
+                  VkImageUsageFlags usage_flags,
+                  VkExtent3D        extent)
 {
-    VkPipelineVertexInputStateCreateInfo info = {};
-    info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    info.pNext = nullptr;
+  VkImageCreateInfo ici = {};
+  ici.sType             = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+  ici.pNext             = nullptr;
 
-    info.vertexBindingDescriptionCount = 0;
-    info.vertexAttributeDescriptionCount = 0;
+  ici.imageType = VK_IMAGE_TYPE_2D;
 
-    return info;
+  ici.format = format;
+  ici.extent = extent;
+
+  ici.mipLevels   = 1;
+  ici.arrayLayers = 1;
+
+  ici.samples = VK_SAMPLE_COUNT_1_BIT;
+  ici.tiling  = VK_IMAGE_TILING_OPTIMAL;
+  ici.usage   = usage_flags;
+
+  return ici;
 }
 
-VkPipelineInputAssemblyStateCreateInfo vkInit::inputAssemblyCreateInfo(VkPrimitiveTopology topology)
+VkImageViewCreateInfo
+image_view_create_info(VkFormat           format,
+                       VkImage            image,
+                       VkImageAspectFlags aspect_flags)
 {
-    VkPipelineInputAssemblyStateCreateInfo info = {};
+  VkImageViewCreateInfo ivci = {};
+  ivci.sType                 = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+  ivci.pNext                 = nullptr;
+  ivci.viewType              = VK_IMAGE_VIEW_TYPE_2D;
+  ivci.image                 = image;
+  ivci.format                = format;
 
-    info.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-    info.pNext = nullptr;
+  ivci.subresourceRange.baseMipLevel   = 0;
+  ivci.subresourceRange.levelCount     = 1;
+  ivci.subresourceRange.baseArrayLayer = 0;
+  ivci.subresourceRange.layerCount     = 1;
+  ivci.subresourceRange.aspectMask     = aspect_flags;
 
-    info.topology = topology;
-    info.primitiveRestartEnable = VK_FALSE;
-
-    return info;
+  return ivci;
 }
 
-VkPipelineRasterizationStateCreateInfo vkInit::rasterizationStateCreateInfo(VkPolygonMode polygonMode)
+VkSemaphoreSubmitInfo
+semaphore_submit_info(VkPipelineStageFlags2 stage_mask, VkSemaphore semaphore)
 {
-    VkPipelineRasterizationStateCreateInfo info = {};
-    info.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-    info.pNext = nullptr;
+  VkSemaphoreSubmitInfo ssi = {};
+  ssi.sType                 = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO;
+  ssi.pNext                 = nullptr;
+  ssi.semaphore             = semaphore;
+  ssi.stageMask             = stage_mask;
+  ssi.deviceIndex           = 0;
+  ssi.value                 = 1;
 
-    info.depthClampEnable = VK_FALSE;
-    info.rasterizerDiscardEnable = VK_FALSE;
-
-    info.polygonMode = polygonMode;
-    info.lineWidth = 1.0f;
-    info.cullMode = VK_CULL_MODE_NONE;
-    info.frontFace = VK_FRONT_FACE_CLOCKWISE;
-    info.depthBiasEnable = VK_FALSE;
-    info.depthBiasConstantFactor = 0.0f;
-    info.depthBiasClamp = 0.0f;
-    info.depthBiasSlopeFactor = 0.0f;
-
-    return info;
+  return ssi;
 }
 
-VkPipelineMultisampleStateCreateInfo vkInit::multisamplingStateCreateInfo()
+VkCommandBufferSubmitInfo
+command_buffer_submit_info(VkCommandBuffer cmd)
 {
-    VkPipelineMultisampleStateCreateInfo info = {};
-    info.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-    info.pNext = nullptr;
+  VkCommandBufferSubmitInfo cbsi = {};
+  cbsi.sType                     = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO;
+  cbsi.pNext                     = nullptr;
+  cbsi.commandBuffer             = cmd;
+  cbsi.deviceMask                = 0;
 
-    info.sampleShadingEnable = VK_FALSE;
-    info.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-    info.minSampleShading = 1.0f;
-    info.pSampleMask = nullptr;
-    info.alphaToCoverageEnable = VK_FALSE;
-    info.alphaToOneEnable = VK_FALSE;
-
-    return info;
+  return cbsi;
 }
 
-VkPipelineColorBlendAttachmentState vkInit::colorBlendAttachmentState()
+VkSubmitInfo2
+submit_info(VkCommandBufferSubmitInfo* cbsi,
+            VkSemaphoreSubmitInfo*     signal_semaphore_info,
+            VkSemaphoreSubmitInfo*     wait_semaphore_info)
 {
-    VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
-    colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT |
-                                          VK_COLOR_COMPONENT_G_BIT |
-                                          VK_COLOR_COMPONENT_B_BIT |
-                                          VK_COLOR_COMPONENT_A_BIT;
-    colorBlendAttachment.blendEnable = VK_FALSE;
+  VkSubmitInfo2 si = {};
+  si.sType         = VK_STRUCTURE_TYPE_SUBMIT_INFO_2;
+  si.pNext         = nullptr;
 
-    return colorBlendAttachment;
+  si.waitSemaphoreInfoCount = wait_semaphore_info == nullptr ? 0 : 1;
+  si.pWaitSemaphoreInfos    = wait_semaphore_info;
+
+  si.signalSemaphoreInfoCount = signal_semaphore_info == nullptr ? 0 : 1;
+  si.pSignalSemaphoreInfos    = signal_semaphore_info;
+
+  si.commandBufferInfoCount = 1;
+  si.pCommandBufferInfos    = cbsi;
+
+  return si;
 }
 
-VkPipelineLayoutCreateInfo vkInit::pipelineLayoutCreateInfo()
+VkFenceCreateInfo
+fence_create_info(VkFenceCreateFlags flags)
 {
-    VkPipelineLayoutCreateInfo info = {};
+  VkFenceCreateInfo fci = {};
+  fci.sType             = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+  fci.pNext             = nullptr;
+  fci.flags             = flags;
 
-    info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    info.pNext = nullptr;
-
-    info.flags = 0;
-    info.setLayoutCount = 0;
-    info.pSetLayouts = nullptr;
-    info.pushConstantRangeCount = 0;
-    info.pPushConstantRanges = nullptr;
-
-    return info;
+  return fci;
 }
 
-VkFenceCreateInfo vkInit::fenceCreateInfo(VkFenceCreateFlags flags)
+VkRenderingAttachmentInfo
+attachment_info(VkImageView view, VkClearValue* clear, VkImageLayout layout)
 {
-    VkFenceCreateInfo info = {};
-    info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-    info.pNext = nullptr;
-    info.flags = flags;
+  VkRenderingAttachmentInfo rai = {};
+  rai.sType                     = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+  rai.pNext                     = nullptr;
+  rai.imageView                 = view;
+  rai.imageLayout               = layout;
+  rai.loadOp = clear ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
+  rai.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 
-    return info;
+  if (clear) {
+    rai.clearValue = *clear;
+  }
+
+  return rai;
 }
 
-VkSemaphoreCreateInfo vkInit::semaphoreCreateInfo(VkSemaphoreCreateFlags flags)
+VkRenderingInfo
+rendering_info(VkExtent2D                 render_extent,
+               VkRenderingAttachmentInfo* color_attach,
+               VkRenderingAttachmentInfo* depth_attach)
 {
-    VkSemaphoreCreateInfo info = {};
-    info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-    info.pNext = nullptr;
-    info.flags = flags;
+  VkRenderingInfo ri = {};
+  ri.sType           = VK_STRUCTURE_TYPE_RENDERING_INFO;
+  ri.pNext           = nullptr;
+  ri.renderArea      = VkRect2D{
+    VkOffset2D{0, 0},
+    render_extent
+  };
+  ri.layerCount           = 1;
+  ri.colorAttachmentCount = 1;
+  ri.pColorAttachments    = color_attach;
+  ri.pDepthAttachment     = depth_attach;
+  ri.pStencilAttachment   = nullptr;
 
-    return info;
+  return ri;
 }
 
-VkImageCreateInfo vkInit::imageCreateInfo(VkFormat format, VkImageUsageFlags flags, VkExtent3D extent)
+VkPipelineShaderStageCreateInfo
+pipeline_shader_stage_create_info(VkShaderStageFlagBits shader_stage,
+                                  VkShaderModule        shader_module)
 {
-    VkImageCreateInfo info = {};
+  VkPipelineShaderStageCreateInfo ci = {
+    .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO
+  };
+  ci.pNext  = nullptr;
+  ci.stage  = shader_stage;
+  ci.module = shader_module;
+  ci.pName  = "main";
 
-    info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    info.pNext = nullptr;
-
-    info.imageType = VK_IMAGE_TYPE_2D;
-    info.format = format;
-    info.extent = extent;
-
-    info.mipLevels = 1;
-    info.arrayLayers = 1;
-    info.samples = VK_SAMPLE_COUNT_1_BIT;
-    info.tiling = VK_IMAGE_TILING_OPTIMAL;
-    info.usage = flags;
-
-    return info;
+  return ci;
 }
-
-VkImageViewCreateInfo vkInit::imageviewCreateInfo(VkFormat format, VkImage image, VkImageAspectFlags aspectFlags)
+VkPipelineLayoutCreateInfo
+pipeline_layout_create_info()
 {
-    VkImageViewCreateInfo info = {};
-    info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    info.pNext = nullptr;
+  VkPipelineLayoutCreateInfo plci = {};
+  plci.sType                  = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+  plci.pNext                  = nullptr;
+  plci.flags                  = 0;
+  plci.setLayoutCount         = 0;
+  plci.pSetLayouts            = nullptr;
+  plci.pushConstantRangeCount = 0;
+  plci.pPushConstantRanges    = nullptr;
 
-    info.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    info.image = image;
-    info.format = format;
-
-    info.subresourceRange.baseMipLevel = 0;
-    info.subresourceRange.levelCount = 1;
-    info.subresourceRange.baseArrayLayer = 0;
-    info.subresourceRange.layerCount = 1;
-    info.subresourceRange.aspectMask = aspectFlags;
-
-    return info;
+  return plci;
 }
-
-VkSamplerCreateInfo vkInit::samplerCreateInfo(VkFilter filters, VkSamplerAddressMode samplerAddressMode)
-{
-    VkSamplerCreateInfo info = {};
-    info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-    info.pNext = nullptr;
-    info.magFilter = filters;
-    info.minFilter = filters;
-    info.addressModeU = samplerAddressMode;
-    info.addressModeV = samplerAddressMode;
-    info.addressModeW = samplerAddressMode;
-
-    return info;
-}
-
-VkWriteDescriptorSet vkInit::writeDescriptorImage(VkDescriptorType type, VkDescriptorSet dstSet, VkDescriptorImageInfo* imageInfo, uint32_t binding)
-{
-    VkWriteDescriptorSet write = {};
-    write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    write.pNext = nullptr;
-    write.dstBinding = binding;
-    write.dstSet = dstSet;
-    write.descriptorCount = 1;
-    write.descriptorType = type;
-    write.pImageInfo = imageInfo;
-
-    return write;
-}
-
-VkPipelineDepthStencilStateCreateInfo vkInit::depthStencilCreateInfo(bool bDepthTest, bool bDepthWrite, VkCompareOp compareOp)
-{
-    VkPipelineDepthStencilStateCreateInfo info = {};
-    info.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-    info.pNext = nullptr;
-
-    info.depthTestEnable = bDepthTest ? VK_TRUE : VK_FALSE;
-    info.depthWriteEnable = bDepthWrite ? VK_TRUE : VK_FALSE;
-    info.depthCompareOp = bDepthTest ? compareOp : VK_COMPARE_OP_ALWAYS;
-    info.depthBoundsTestEnable = VK_FALSE;
-    info.minDepthBounds = 0.0f;
-    info.maxDepthBounds = 1.0f;
-    info.stencilTestEnable = VK_FALSE;
-
-    return info;
-}
-
-VkDescriptorSetLayoutBinding vkInit::descriptorSetLayoutBinding(VkDescriptorType type, VkShaderStageFlags stageFlags, uint32_t binding)
-{
-    VkDescriptorSetLayoutBinding setBind = {};
-    setBind.binding = binding;
-    setBind.descriptorCount = 1;
-    setBind.descriptorType = type;
-    setBind.pImmutableSamplers = nullptr;
-    setBind.stageFlags = stageFlags;
-
-    return setBind;
-}
-
-VkWriteDescriptorSet vkInit::writeDescriptorBuffer(VkDescriptorType type, VkDescriptorSet dstSet, VkDescriptorBufferInfo* bufferInfo, uint32_t binding)
-{
-    VkWriteDescriptorSet write = {};
-    write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    write.pNext = nullptr;
-
-    write.dstBinding = binding;
-    write.dstSet = dstSet;
-    write.descriptorCount = 1;
-    write.descriptorType = type;
-    write.pBufferInfo = bufferInfo;
-
-    return write;
 }
