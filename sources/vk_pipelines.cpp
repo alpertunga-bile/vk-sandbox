@@ -161,6 +161,37 @@ PipelineBuilder::set_multisampling_none()
 }
 
 void
+PipelineBuilder::enable_blending_additive()
+{
+  color_blend_attachment.colorWriteMask =
+    VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
+    VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+  color_blend_attachment.blendEnable         = VK_TRUE;
+  color_blend_attachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+  color_blend_attachment.dstColorBlendFactor = VK_BLEND_FACTOR_DST_ALPHA;
+  color_blend_attachment.colorBlendOp        = VK_BLEND_OP_ADD;
+  color_blend_attachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+  color_blend_attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+  color_blend_attachment.alphaBlendOp        = VK_BLEND_OP_ADD;
+}
+
+void
+PipelineBuilder::enable_blending_alpha_blend()
+{
+  color_blend_attachment.colorWriteMask =
+    VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
+    VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+  color_blend_attachment.blendEnable = VK_TRUE;
+  color_blend_attachment.srcColorBlendFactor =
+    VK_BLEND_FACTOR_ONE_MINUS_DST_ALPHA;
+  color_blend_attachment.dstColorBlendFactor = VK_BLEND_FACTOR_DST_ALPHA;
+  color_blend_attachment.colorBlendOp        = VK_BLEND_OP_ADD;
+  color_blend_attachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+  color_blend_attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+  color_blend_attachment.alphaBlendOp        = VK_BLEND_OP_ADD;
+}
+
+void
 PipelineBuilder::disable_blending()
 {
   color_blend_attachment.colorWriteMask =
@@ -182,6 +213,20 @@ void
 PipelineBuilder::set_depth_format(VkFormat format)
 {
   render_info.depthAttachmentFormat = format;
+}
+
+void
+PipelineBuilder::enable_depthtest(bool depth_write_enable, VkCompareOp op)
+{
+  depth_stencil.depthTestEnable       = VK_TRUE;
+  depth_stencil.depthWriteEnable      = depth_write_enable;
+  depth_stencil.depthCompareOp        = op;
+  depth_stencil.depthBoundsTestEnable = VK_FALSE;
+  depth_stencil.stencilTestEnable     = VK_FALSE;
+  depth_stencil.front                 = {};
+  depth_stencil.back                  = {};
+  depth_stencil.minDepthBounds        = 0.f;
+  depth_stencil.maxDepthBounds        = 1.f;
 }
 
 void

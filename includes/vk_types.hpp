@@ -60,6 +60,84 @@ struct GPUDrawPushConstants
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////
+// Render Architecture
+
+enum class MaterialPass : uint8_t
+{
+  MAIN_COLOR,
+  TRANSPARENT,
+  OTHER
+};
+
+struct MaterialPipeline
+{
+  VkPipeline       pipeline;
+  VkPipelineLayout layout;
+};
+
+struct MaterialInstance
+{
+  MaterialPipeline* pipeline;
+  VkDescriptorSet   material_set;
+  MaterialPass      pass_type;
+};
+
+struct Bounds
+{
+  glm::vec3 origin;
+  float     sphere_radius;
+  glm::vec3 extents;
+};
+
+struct RenderObject
+{
+  uint32_t index_count;
+  uint32_t first_index;
+  VkBuffer index_buffer;
+
+  MaterialInstance* material;
+
+  Bounds          bounds;
+  glm::mat4       transform;
+  VkDeviceAddress vertex_buffer_address;
+};
+
+struct DrawContext
+{
+  std::vector<RenderObject> opaque_surfaces;
+  std::vector<RenderObject> transparent_surfaces;
+};
+
+class IRenderable
+{
+  virtual void Draw(const glm::mat4& top_matrix, DrawContext& ctx) = 0;
+};
+
+struct Node : public IRenderable
+{
+  std::weak_ptr<Node>                parent;
+  std::vector<std::shared_ptr<Node>> children;
+
+  glm::mat4 local_transform;
+  glm::mat4 world_transform;
+
+  void refresh_transform(const glm::mat4& parent_matrix)
+  {
+    world_transform = parent_matrix * local_transform;
+    for (auto c : children) {
+      c->refresh_transform(world_transform);
+    }
+  }
+
+  virtual void Draw(const glm::mat4& top_matrix, DrawContext& ctx) override
+  {
+    for (auto& c : children) {
+      c->Draw(top_matrix, ctx);
+    }
+  }
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////
 // Debug / Logging
 
 inline void

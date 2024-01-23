@@ -41,6 +41,12 @@ submit_info(VkCommandBufferSubmitInfo* cbsi,
 VkRenderingAttachmentInfo
 attachment_info(VkImageView view, VkClearValue* clear, VkImageLayout layout);
 
+VkRenderingAttachmentInfo
+depth_attachment_info(VkImageView view, VkImageLayout layout);
+
+void
+generate_mipmaps(VkCommandBuffer cmd, VkImage image, VkExtent2D image_size);
+
 VkRenderingInfo
 rendering_info(VkExtent2D                 render_extent,
                VkRenderingAttachmentInfo* color_attach,

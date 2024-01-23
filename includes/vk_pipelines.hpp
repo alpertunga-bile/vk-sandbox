@@ -24,9 +24,12 @@ public:
   void set_polygon_mode(VkPolygonMode mode);
   void set_cull_mode(VkCullModeFlags cull_mode, VkFrontFace front_face);
   void set_multisampling_none();
+  void enable_blending_additive();
+  void enable_blending_alpha_blend();
   void disable_blending();
   void set_color_attachment_format(VkFormat format);
   void set_depth_format(VkFormat format);
+  void enable_depthtest(bool depth_write_enable, VkCompareOp op);
   void disable_depth_test();
 
   std::vector<VkPipelineShaderStageCreateInfo> shader_stages;
